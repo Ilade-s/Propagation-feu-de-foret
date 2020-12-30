@@ -1,4 +1,4 @@
-# Fire-Propagation-Forest
+# Propagation d'un feu dans une forêt
 Simulation de la propagation d'un feu dans une forêt 
 Plusieurs versions sont disponibles, avec à l'heure actuelle la version 5 qui est la plus rapide et claire dans son écriture
 Les régles de la simulation sont :
