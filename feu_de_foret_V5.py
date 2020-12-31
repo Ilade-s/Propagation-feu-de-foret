@@ -20,9 +20,7 @@ class FeuDeForet: # Objet grid feu
         self.t = 0
         self.tp = 0
     def GenGrid(self) -> None: # Génération Forêt (fonction fille de __init__)
-        """
-        Génére la grille de foret et affiche le temps d'exécution dans console
-        """
+        """Génére la grille de foret et affiche le temps d'exécution dans console"""
         self.nl = int(input('Nombre lignes : '))
         self.nc = int(input('Nombre colonnes : '))
         nC = self.nl*self.nc
@@ -42,9 +40,7 @@ class FeuDeForet: # Objet grid feu
         execution_time = round(end - start,3)
         print('\tTemps d\'exécution : '+str(execution_time)+' secondes')
     def FuncMere(self) -> None: # Fonction principale programme
-        """
-        Fnction principale, appelle le reste des fonctions
-        """
+        """Fonction principale, appelle le reste des fonctions"""
         self.affichage(True) # Setup affichage
         # Initialisation variables pour boucle
         nar=self.narbres
@@ -58,9 +54,10 @@ class FeuDeForet: # Objet grid feu
             self.FuncPropFeu()
             nar = sum([il.count(1) for il in self.grid])
             nfr = sum([il.count(2)+il.count(3) for il in self.grid])
-            print('Arbres restants : '+str(nar+nfr)+' // '+str(round(((nar+nfr)/self.narbres)*100,3))+'%')
-            print('Arbres en feu : '+str(nfr))
-            print('Temps passé : '+str(self.t))
+            if self.TypeAffichage!=2:
+                print('Arbres restants : '+str(nar+nfr)+' // '+str(round(((nar+nfr)/self.narbres)*100,3))+'%')
+                print('Arbres en feu : '+str(nfr))
+                print('Temps passé : '+str(self.t))
             self.affichage()
             listArbresRestants.append(nar+nfr)
             listFeuxRestants.append(nfr)
@@ -107,9 +104,7 @@ class FeuDeForet: # Objet grid feu
         plt.ylabel('Nombre arbres')
         plt.show()
     def FuncPropFeu(self) -> None: # Fonction fille de FuncMere utilisée dans la boucle
-        """
-        Exécute une passe de propagation du feu dans self.grid (la forêt)
-        """
+        """Exécute une passe de propagation du feu dans self.grid (la forêt)"""
         for l in range(self.nl): # Boucle pour étude de tous les éléments de la grille (ligne)
             for c in range(self.nc): # Boucle pour étude de tous les éléments de la grille (colonne)
                 if self.grid [l] [c]==2 or self.grid [l] [c]==3: # Détection états case + mise à feu cases adjacentes (si applicable)
@@ -133,15 +128,13 @@ class FeuDeForet: # Objet grid feu
             il[:] = [2 if x==5 else x for x in il]
             il[:] = [3 if x==6 else x for x in il]  
     def affichage(self, setup=False) -> None: # Affichage de la foret
-        """
-        Affiche la foret en console ou en plot en fonction de self.TypeAffichage (0 : plot ; 1 : console ; 2 : instantané)
+        """Affiche la foret en console ou en plot en fonction de self.TypeAffichage (0 : plot ; 1 : console ; 2 : instantané)
             - #FF0000 = rouge (3)
             - #000000 = noir (4)
             - #00BE00 = vert (1)
             - #9A4A00 = marron (0) (bleu en console)
-            - #FFBF00 = orange (2)
-        """
-        if self.TypeAffichage==2: return() # Vérif si affichage demandé ou non
+            - #FFBF00 = orange (2)"""
+        if self.TypeAffichage==2: return(-1) # Vérif si affichage demandé ou non
         if setup: # Demandes et actions si il s'agit du premier affichage ou non
             while self.tp==0: # Demande du temps d'intervalle si il n'a pas déjà été défini 
                 self.tp = round(float(input('\tCombien de temps entre entre chaque étape ? : ')),2)
@@ -155,6 +148,7 @@ class FeuDeForet: # Objet grid feu
                 suppr(self.nl+4)
             elif self.TypeAffichage==0:
                 suppr(3)
+        # Affichage en lui même
         if self.TypeAffichage==0: # Affichage grille en couleur
             cmap = clr.ListedColormap(['#9A4A00','#00BE00','#FFBF00','#FF0000','#000000'])
             Boundaries = [-0.1,0.9,1.9,2.9,3.9,4.9]
@@ -167,8 +161,9 @@ class FeuDeForet: # Objet grid feu
             plt.title('Configuration : '+str(self.nl)+'*'+str(self.nc)+' // Taux d\'arbres : '+str(self.ta))
             plt.xlabel('Colonnes')
             plt.ylabel('Lignes')
-            plt.pause(self.tp)
+            plt.savefig("feu_de_foret/fig")
             plt.close()
+            plt.pause(self.tp)
         elif self.TypeAffichage==1: # Affichage grille en console (couleur aussi)
             for l in self.grid:
                 print('\t',end=' ')
