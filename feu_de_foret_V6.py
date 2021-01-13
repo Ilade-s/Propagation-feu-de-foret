@@ -1,7 +1,7 @@
 from random import shuffle # Pour mélange aléatoire de la grille
 from time import perf_counter,sleep # Commandes pauses + chronomètre performance
 import matplotlib.pyplot as plt # Commandes plots
-import matplotlib.gridspec as gridspec
+import matplotlib.gridspec as gridspec # Commandes multiplot
 from termcolor import colored # Commandes pour couleur texte
 from ToolsPerso import Tools # Outils personnels
 from tkinter import * # GUI
@@ -27,7 +27,7 @@ class FeuDeForet: # Objet grid feu
         bouton2.pack()
         bouton3.pack()
         ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy)
-        ExitButton.pack(anchor=CENTER)
+        ExitButton.pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
         self.TypeAffichage = value.get()
         if self.TypeAffichage==1 or self.TypeAffichage==0: # Console et Tkinter
@@ -60,7 +60,7 @@ class FeuDeForet: # Objet grid feu
         labelEntry.pack()
         entry.pack()
         ExitButton = Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy)
-        ExitButton.pack(anchor=CENTER)
+        ExitButton.pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
         self.nc = varL.get()
         self.nl = varC.get()
@@ -79,7 +79,7 @@ class FeuDeForet: # Objet grid feu
             labelEntryTp.pack()
             entryTp.pack()
             ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy)
-            ExitButton.pack(anchor=CENTER)
+            ExitButton.pack(anchor=CENTER,pady=10,padx=10)
             root.mainloop()
             self.tp = float(varTp.get())
     def GenGrid(self) -> None: # Génération Forêt (fonction fille de __init__)
@@ -184,7 +184,7 @@ class FeuDeForet: # Objet grid feu
                 Feu.listArbresRestants.append(Feu.nar+Feu.nfr)
                 Feu.listFeuxRestants.append(Feu.nfr)
                 Tools.suppr(3)
-                print('Arbres restants :',Feu.nar+Feu.nfr,'//',int((Feu.nar+Feu.nfr)/self.narbres)*100,'%')
+                print('Arbres restants :',Feu.nar+Feu.nfr,'//',round((Feu.nar+Feu.nfr)/self.narbres*100,3),'%')
                 print('Arbres en feu :',Feu.nfr)
                 print('Temps passé : ',self.t)
                 if Feu.nfr==0: 
@@ -205,7 +205,7 @@ class FeuDeForet: # Objet grid feu
             root.geometry("600x600")
             for i in range(self.nl):
                 root.rowconfigure(i,weight=1)
-            for j in range(self.nl):
+            for j in range(self.nc):
                 root.columnconfigure(j,weight=1)
             for i in range(self.nl):
                 for j in range(self.nc):
@@ -233,17 +233,6 @@ class FeuDeForet: # Objet grid feu
                 print(' ')
             sleep(self.tp)
     def FuncFinProg(self,start) -> None: # Fin de programme (graphes)
-        nar = sum([il.count(1) for il in self.grid])
-        nfr = sum([il.count(2)+il.count(3) for il in self.grid])
-        end = perf_counter()
-        execution_time = round(end - start,3)
-        # Etat final de la simulation
-        if self.TypeAffichage!=0: self.affichage()
-        print('\tTerminé !', end=' ')
-        print('\tTemps d\'exécution : '+str(execution_time)+' secondes')
-        print('Arbres restants : '+str(nar+nfr)+' // '+str(round(((nar+nfr)/self.narbres)*100,3))+'%')
-        print('Arbres en feu : '+str(nfr))
-        print('Temps passé : '+str(self.t))
         # Création multi plots
         fig2 = plt.figure(constrained_layout=True)
         spec2 = gridspec.GridSpec(ncols=1, nrows=2, figure=fig2)
@@ -265,6 +254,33 @@ class FeuDeForet: # Objet grid feu
         plt.suptitle('Configuration :'+str(self.nl)+'*'+str(self.nc)+' // Taux d\'arbres : '+str(self.ta))
         plt.xlabel('Temps passé')
         plt.ylabel('Nombre arbres')
-        plt.show()
+        nar = sum([il.count(1) for il in self.grid])
+        nfr = sum([il.count(2)+il.count(3) for il in self.grid])
+        end = perf_counter()
+        execution_time = round(end - start,3)
+        if self.TypeAffichage!=0:
+            # Etat final de la simulation
+            self.affichage()
+            print('\tTerminé !', end=' ')
+            print('\tTemps d\'exécution : '+str(execution_time)+' secondes')
+            print('Arbres restants : '+str(nar+nfr)+' // '+str(round(((nar+nfr)/self.narbres)*100,3))+'%')
+            print('Temps passé : '+str(self.t))
+            plt.show()
+        else:
+            plt.ion()
+            plt.show()
+            root = Tk()
+            root.title("Etat final simulation")
+            label = Label(root,text="Terminé !",anchor=CENTER)
+            labelTe = Label(root,text='\tTemps d\'exécution : '+str(execution_time)+' secondes')
+            labelAr = Label(root, text="Arbres en feu : "+str(nfr))
+            labelTp = Label(root, text='Arbres restants : '+str(nar+nfr)+' // '+str(round(((nar+nfr)/self.narbres)*100,3))+'%')
+            label.pack()
+            labelTe.pack()
+            labelAr.pack()
+            labelTp.pack()
+            ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=exit)
+            ExitButton.pack(anchor=CENTER,pady=10,padx=10)
+            root.mainloop()
 Feu = FeuDeForet()
 Feu.FuncMere()
