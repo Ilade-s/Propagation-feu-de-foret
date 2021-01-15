@@ -8,7 +8,7 @@ Les régles de la simulation sont :
   - la simulation s'arrête lorsque qu'il n'y a plus d'arbres en feu (simulation bloquée)
  
  ATTENTION : Pour la version 6, ToolsPerso.py doit être présent dans le même dossier pour fonctionner
------------------------------------------------------------------------------------------------------------
+_____________________________________________________________________
 Simulation of the propagation of a fire in a forest. Several versions are available, with currently version 6 being the fastest and clearest in its writing (GUI) The rules of the simulation are :
 
 A rate of trees as well as a size given by the user.
