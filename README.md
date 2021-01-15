@@ -17,4 +17,5 @@ Simulation of the propagation of a fire in a forest. Several versions are availa
   - A burning tree can only ignite the 4 squares directly adjacent to it.
   - the simulation stops when there are no more burning trees (blocked simulation)
   - Modules used : tkinter, termcolor (installation needed), matplotlib (installation needed)
+
 WARNING: For version 6, ToolsPerso.py must be present in the same folder in order to work.
