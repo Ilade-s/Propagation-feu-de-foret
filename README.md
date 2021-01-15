@@ -6,3 +6,5 @@ Les régles de la simulation sont :
   - Un arbre en feu depuis deux passes de la boucle de la simulation devient brulé et ne propage plus le feu
   - Un arbre en feu peut enflammer uniquement les 4 cases directement adjacentes à lui
   - la simulation s'arrête lorsque qu'il n'y a plus d'arbres en feu (simulation bloquée)
+ 
+ ATTENTION : Pour la version 6, ToolsPerso.py doit être présent dans le même dossier pour fonctionner
