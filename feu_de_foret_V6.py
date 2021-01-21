@@ -5,6 +5,9 @@ import matplotlib.gridspec as gridspec # Commandes multiplot
 from termcolor import colored # Commandes pour couleur texte
 from ToolsPerso import Tools # Outils personnels
 from tkinter import * # GUI
+import ctypes # Pour lancement dans console IDLE python (support suppression de texte)
+kernel32 = ctypes.windll.kernel32 # IDLE
+kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7) # IDLE
 class FeuDeForet: # Objet grid feu
     def __init__(self) -> None: # Initialisation données
         self.grid = []
