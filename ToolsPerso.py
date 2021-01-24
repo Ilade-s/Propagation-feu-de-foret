@@ -1,8 +1,10 @@
 import random
 import sys
 import ctypes # Pour lancement dans console IDLE python (support suppression de texte)
-kernel32 = ctypes.windll.kernel32 # IDLE suppression
-kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7) # IDLE suppression
+try: # Fonctionnement suppr() sous windows
+    kernel32 = ctypes.windll.kernel32 # IDLE suppression
+    kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7) # IDLE suppression
+except OSError: pass
 class Tools:
     """Outils personnels pour routines :
         - suppression de lignes : suppr(n)
