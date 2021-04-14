@@ -6,11 +6,13 @@ from termcolor import colored # Commandes pour couleur texte
 from ToolsPerso import Tools # Outils personnels
 from tkinter import * # GUI
 class FeuDeForet: # Objet grid feu
+    
     def __init__(self) -> None: # Initialisation données
         self.grid = []
         self.GetValues()
         self.GenGrid()
         self.t = 0
+    
     def GetValues(self) -> None: # Récupération des valeurs pas GUI tkinter
         """Récupère les valeurs nécessaires pour la simulation"""
         root = Tk()
@@ -82,6 +84,7 @@ class FeuDeForet: # Objet grid feu
             ExitButton.pack(anchor=CENTER,pady=10,padx=10)
             root.mainloop()
             self.tp = float(varTp.get())
+    
     def GenGrid(self) -> None: # Génération Forêt (fonction fille de __init__)
         """Génére la grille de foret et affiche le temps d'exécution dans console"""
         nC = self.nl*self.nc
@@ -100,6 +103,7 @@ class FeuDeForet: # Objet grid feu
         end = perf_counter()
         execution_time = round(end - start,3)
         print('\tTemps d\'exécution : ',execution_time,' secondes')
+
     def FuncMere(self) -> None: # Fonction principale programme
         """Fonction principale, appelle le reste des fonctions"""
         # Initialisation variables pour boucle
@@ -133,6 +137,7 @@ class FeuDeForet: # Objet grid feu
         else: # Affichage tkinter (boucle tkinter gérée)
             self.affichage(True) # Setup affichage
         self.FuncFinProg(start)
+    
     def FuncPropFeu(self) -> None: # Fonction fille de FuncMere utilisée dans la boucle
         """Exécute une passe de propagation du feu dans self.grid (la forêt)"""
         for l in range(self.nl): # Boucle pour étude de tous les éléments de la grille (ligne)
@@ -157,6 +162,7 @@ class FeuDeForet: # Objet grid feu
         for il in self.grid: # Boucle pour remplacement nouveaux feux en feux normaux (Correction bug)
             il[:] = [2 if x==5 else x for x in il]
             il[:] = [3 if x==6 else x for x in il]  
+    
     def affichage(self, setup=False) -> None: # Affichage de la foret
         """Affiche la foret en console ou en plot en fonction de self.TypeAffichage (0 : tkinter ; 1 : console ; 2 : instantané)
             - rouge (3)
@@ -232,6 +238,7 @@ class FeuDeForet: # Objet grid feu
                         print(c,end=' ') 
                 print(' ')
             sleep(self.tp)
+    
     def FuncFinProg(self,start) -> None: # Fin de programme (graphes)
         # Création multi plots
         fig2 = plt.figure(constrained_layout=True)
