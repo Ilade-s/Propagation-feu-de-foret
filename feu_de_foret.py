@@ -1,9 +1,19 @@
-from random import shuffle # Pour mélange aléatoire de la grille
+from random import shuffle, randint # Pour mélange aléatoire de la grille
 from time import perf_counter,sleep # Commandes pauses + chronomètre performance
 import matplotlib.pyplot as plt # Commandes plots
 import matplotlib.gridspec as gridspec # Commandes multiplot
 from termcolor import colored # Commandes pour couleur texte
 from tkinter import * # GUI
+import os 
+
+def SupprCnsl():
+    """
+    Vide la console
+    """
+    if os.name == "nt":
+        os.system('cls')
+    elif os.name == "posix":
+        os.system('clear')
 
 def MatPrint(mat):
     """
@@ -38,29 +48,80 @@ def MatPrint(mat):
                 print(c,end=' ') 
         print(' ')
 
-class Statistiques(object):
+def Proba(n):
+    """Permet d'ajouter des condition de probabilité :
+        - n : Nombre enntre 1 et 100 : %age de chance
+        - sortie : True ou False
+    """
+    tirage = randint(1,100)
+    if tirage<=n: return(True)
+    else: return(False)
 
-    def __init__(self, arg) -> None:
+class Statistiques(object): # Class decorator
+    """
+    Class decorator de la fonction Passe, qui est une méthode de Simulation (Sim)
+    """
+    def __init__(self, arg): # Initialisation attributs (pour __call__)
         self._arg = arg
         self.tp = 0
         self._mem_ar = []
         self._mem_fr = []
 
-    def __call__(self):
+    def __call__(self): # Pour décorer Passe
         retval = self._arg(Sim)
         self.tp += 1
         self._mem_fr.append(retval[0])
         self._mem_ar.append(retval[1])
+        return retval
 
     def memory(self):
         return (self.tp, self._mem_fr, self._mem_ar)
+    
+    def Affichage(self): # Plot Affichage final
+        """
+        Crée le plot (matplotlib), qui pourra ensuite être affiché par plt.show()
+        """
+        self.nl = Sim.nl
+        self.nc = Sim.nc
+        self.ta = Sim.ta
+        # Création multi plots
+        fig2 = plt.figure(constrained_layout=True)
+        spec2 = gridspec.GridSpec(ncols=1, nrows=2, figure=fig2)
+        # Remplissage plot arbres restants
+        f2_ax1 = fig2.add_subplot(spec2[0, 0])
+        f2_ax1.set_title('Nombre d\'arbres')
+        if len(self._mem_ar)<100: # Courbe temps court
+            f2_ax1.plot(self._mem_ar,'o-')
+        else: # Courbe temps long
+            f2_ax1.plot(self._mem_ar)
+        # Remplissage plot feux
+        f2_ax2 = fig2.add_subplot(spec2[1, 0])
+        f2_ax2.set_title('Nombre de feux')
+        if len(self._mem_fr)<100: # Courbe temps court
+            f2_ax2.plot(self._mem_fr,'ro-')
+        else: # Courbe temps long
+            f2_ax2.plot(self._mem_fr,'r')
+        # Affichage plots
+        plt.suptitle('Configuration :'+str(self.nl)+'*'+str(self.nc)+' // Taux d\'arbres : '+str(self.ta))
+        plt.xlabel('Temps passé')
+        plt.ylabel('Nombre arbres')
 
 class Creation:
+    """
+    SuperClass de Simulation, récupère les valeurs nécessaires puis crée la grille (self.Grid)
 
-    def __init__(self) -> None:
+    FONCTIONS :
+        - GetValues
+            - Récupère les valeurs nécessaires
+            - Utilisation de fenêtres tkinter
+        - GenGrid 
+            - Génére la grille/forêt de simulation
+            - Utilise les données récupérées par GetValues"""
+    
+    def __init__(self):
         self.GetValues()
-        #self.GenGrid()
-        print("Temps de génération :",self.GenGrid(),"s")
+        self.GenTime = self.GenGrid()
+        print("Temps de génération :",self.GenTime,"s")
 
     def GetValues(self):
         root = Tk()
@@ -148,11 +209,51 @@ class Creation:
         return execution_time
         
 class Simulation(Creation):
+    """
+    Classe gérant la simulation 
+
+    Subclass de Creation, qui prépare la simulation : hérite des tous les attributs (self.Grid notamment)
+    """
 
     @Statistiques # Mémoire pour statisitiques
-    def Passe(self) -> tuple:
+    def Passe(self):
+        """
+        Exécute une passe de propagation du feu
+
+        PARAMETRES :
+            - Aucun
+        
+        SORTIE :
+            - tuple : (int, int)
+                - [0] : nfr : nombre de feux restants (2)
+                - [1] : nar : nombre d'arbres restants (1)
+        """
+        for l in range(self.nl): # Boucle pour étude de tous les éléments de la grille (ligne)
+            for c in range(self.nc): # Boucle pour étude de tous les éléments de la grille (colonne)
+                if self.grid [l] [c]==2 or self.grid [l] [c]==3: # Détection états case + mise à feu cases adjacentes (si applicable)
+                    if l!=0:
+                        if self.grid [l-1] [c]==1 and Proba(self.ProbFeu): # Voisin haut
+                            self.grid [l-1] [c] = 5
+                    if l!=self.nl-1:
+                        if self.grid [l+1] [c]==1 and Proba(self.ProbFeu): # Voisin bas
+                            self.grid [l+1] [c] = 5
+                    if c!=self.nc-1:
+                        if self.grid [l] [c+1]==1 and Proba(self.ProbFeu): # Voisin droite
+                            self.grid [l] [c+1] = 5
+                    if c!=0:
+                        if self.grid [l] [c-1]==1 and Proba(self.ProbFeu): # Voisin gauche
+                            self.grid [l] [c-1] = 5 
+                    if self.grid [l] [c]==3:
+                        self.grid [l] [c] = 4 # Changement d'état de l'arbre de feu à brulé (état inerte)
+                    else:
+                        self.grid [l] [c] = 3
+        for il in self.grid: # Boucle pour remplacement nouveaux feux en feux normaux (Correction bug)
+            il[:] = [2 if x==5 else x for x in il]
+            il[:] = [3 if x==6 else x for x in il] 
+        # Enregristrement résultat de la passe
         nar = sum([il.count(1) for il in self.grid])
         nfr = sum([il.count(2)+il.count(3) for il in self.grid])
+        # Retour valeurs pour mémoire (Statistiques)
         return (nfr, nar)
 
     
@@ -161,10 +262,74 @@ class Simulation(Creation):
 if __name__=='__main__': # Test
     Sim = Simulation()
 
-    MatPrint(Sim.grid)
+    if Sim.TypeAffichage == 1: # Affichage console
+        # Affichage initial
+        MatPrint(Sim.grid)
+        print("Forêt initiale :")
+        print("Arbres restants :",Sim.narbres)
+        print("Arbres en feu :",Sim.nfi)
 
-    for i in range(5):    
+        sleep(2) # pause
+
+        # première passe
         Sim.Passe()
-        print("Temps passé :",Sim.Passe.memory()[0])
+        MatPrint(Sim.grid)
+        print("Arbres restants :",Sim.Passe._mem_ar[-1])
+        print("Arbres en feu :",Sim.Passe._mem_fr[-1])
+        print("Temps passé :",Sim.Passe.tp)
+        sleep(Sim.tp) # pause
 
-    print(Sim.Passe._mem_ar)
+        while Sim.Passe._mem_fr[-1]>0: # Boucle des passes 
+            Sim.Passe()
+            SupprCnsl()
+            MatPrint(Sim.grid)
+            print("Arbres restants :",Sim.Passe._mem_ar[-1],"//",round((Sim.Passe._mem_ar[-1]+Sim.Passe._mem_fr[-1])/Sim.narbres*100,3),'%')
+            print("Arbres en feu :",Sim.Passe._mem_fr[-1])
+            print("Temps passé :",Sim.Passe.memory()[0])
+            sleep(Sim.tp) # pause
+
+        #print(Sim.Passe._mem_ar)
+        #print(Sim.Passe._mem_fr)
+
+    elif Sim.TypeAffichage == 2: # Sans affichage
+        Sim.Passe() # première passe
+        while Sim.Passe._mem_fr[-1]>0: # Boucle des passes 
+            Sim.Passe()
+
+    elif Sim.TypeAffichage == 0: # Affichage tkinter
+        def update(): # Rafraichisssement fenêtre
+            Sim.Passe()
+            SupprCnsl()
+            print("Arbres restants :",Sim.Passe._mem_ar[-1],"//",round((Sim.Passe._mem_ar[-1]+Sim.Passe._mem_fr[-1])/Sim.narbres*100,3),'%')
+            print("Arbres en feu :",Sim.Passe._mem_fr[-1])
+            print("Temps passé :",Sim.Passe.memory()[0])
+            for i in range(Sim.nl):
+                    for j in range(Sim.nc):
+                        cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
+            if Sim.Passe._mem_fr[-1]>0: # Boucle passes    
+                root.after(int(Sim.tp*1000),update)
+            else:
+                root.destroy()
+
+        couleurs = {0:"blue",1:"green",2:"orange",3:"red",4:"black"}
+        cells = [[0 for c in range(Sim.nc)] for l in range(Sim.nl)]
+        root = Tk()
+        root.title('Forêt')
+        root.resizable(False, False)
+        root.geometry("600x600")
+        for i in range(Sim.nl):
+            root.rowconfigure(i,weight=1)
+        for j in range(Sim.nc):
+            root.columnconfigure(j,weight=1)
+        for i in range(Sim.nl):
+            for j in range(Sim.nc):
+                w = Label(root,borderwidth=1,relief=SOLID,bg=couleurs[Sim.grid[i][j]])
+                cells[i][j] = w
+                cells[i][j].grid(row=i,column=j\
+                    ,ipadx=600/Sim.nc\
+                    ,ipady=600/Sim.nl)
+        root.after(int(Sim.tp*1000),update)
+        root.mainloop()
+
+    Sim.Passe.Affichage() # Création plot
+    plt.show() # Affichage plot
