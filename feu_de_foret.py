@@ -47,7 +47,7 @@ class Statistiques(object):
         self._mem_fr = []
 
     def __call__(self):
-        retval = self._arg()
+        retval = self._arg(Sim)
         self.tp += 1
         self._mem_fr.append(retval[0])
         self._mem_ar.append(retval[1])
@@ -149,10 +149,10 @@ class Creation:
         
 class Simulation(Creation):
 
-    @Statistiques
-    def Passe() -> tuple:
-        nfr = 0
-        nar = 0
+    @Statistiques # Mémoire pour statisitiques
+    def Passe(self) -> tuple:
+        nar = sum([il.count(1) for il in self.grid])
+        nfr = sum([il.count(2)+il.count(3) for il in self.grid])
         return (nfr, nar)
 
     
@@ -165,5 +165,6 @@ if __name__=='__main__': # Test
 
     for i in range(5):    
         Sim.Passe()
+        print("Temps passé :",Sim.Passe.memory()[0])
 
     print(Sim.Passe._mem_ar)
