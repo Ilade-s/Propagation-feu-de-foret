@@ -1,0 +1,335 @@
+from random import shuffle, randint # Pour mélange aléatoire de la grille
+from time import perf_counter,sleep # Commandes pauses + chronomètre performance
+import matplotlib.pyplot as plt # Commandes plots
+import matplotlib.gridspec as gridspec # Commandes multiplot
+from termcolor import colored # Commandes pour couleur texte
+from tkinter import * # GUI
+import os 
+
+def SupprCnsl():
+    """
+    Vide la console
+    """
+    if os.name == "nt":
+        os.system('cls')
+    elif os.name == "posix":
+        os.system('clear')
+
+def MatPrint(mat):
+    """
+    Affiche, en couleur, la grille/matrice, en console
+
+    PARAMETRES :
+        - mat : list[list[int]]
+            matrice à afficher
+    
+    SORTIE : 
+        - affichage de la matrice :
+        - Couleurs :
+            - 0 : bleu
+            - 1 : vert
+            - 2 : jaune
+            - 3 : rouge
+            - 4/autres valeurs : print simple (blanc)
+
+    """
+    for l in mat:
+        print('\t',end=' ')
+        for c in l:
+            if c==0: # Case vide (eau?)
+                print(colored(c, 'blue'),end=' ')  
+            elif c==1: # Arbre
+                print(colored(c, 'green'),end=' ') 
+            elif c==2: # Feu 1
+                print(colored(c, 'yellow'),end=' ') 
+            elif c==3: # Feu 2
+                print(colored(c, 'red'),end=' ') 
+            elif c>=4 or c<0: # Cendres?
+                print(c,end=' ') 
+        print(' ')
+
+def Proba(n):
+    """Permet d'ajouter des condition de probabilité :
+        - n : Nombre enntre 1 et 100 : %age de chance
+        - sortie : True ou False
+    """
+    tirage = randint(1,100)
+    if tirage<=n: return(True)
+    else: return(False)
+
+class Statistiques(object): # Class decorator
+    """
+    Class decorator de la fonction Passe, qui est une méthode de Simulation (Sim)
+    """
+    def __init__(self, arg): # Initialisation attributs (pour __call__)
+        self._arg = arg
+        self.tp = 0
+        self._mem_ar = []
+        self._mem_fr = []
+
+    def __call__(self): # Pour décorer Passe
+        retval = self._arg(Sim)
+        self.tp += 1
+        self._mem_fr.append(retval[0])
+        self._mem_ar.append(retval[1])
+        return retval
+
+    def memory(self):
+        return (self.tp, self._mem_fr, self._mem_ar)
+    
+    def Affichage(self): # Plot Affichage final
+        """
+        Crée le plot (matplotlib), qui pourra ensuite être affiché par plt.show()
+        """
+        self.nl = Sim.nl
+        self.nc = Sim.nc
+        self.ta = Sim.ta
+        # Création multi plots
+        fig2 = plt.figure(constrained_layout=True)
+        spec2 = gridspec.GridSpec(ncols=1, nrows=2, figure=fig2)
+        # Remplissage plot arbres restants
+        f2_ax1 = fig2.add_subplot(spec2[0, 0])
+        f2_ax1.set_title('Nombre d\'arbres')
+        if len(self._mem_ar)<100: # Courbe temps court
+            f2_ax1.plot(self._mem_ar,'o-')
+        else: # Courbe temps long
+            f2_ax1.plot(self._mem_ar)
+        # Remplissage plot feux
+        f2_ax2 = fig2.add_subplot(spec2[1, 0])
+        f2_ax2.set_title('Nombre de feux')
+        if len(self._mem_fr)<100: # Courbe temps court
+            f2_ax2.plot(self._mem_fr,'ro-')
+        else: # Courbe temps long
+            f2_ax2.plot(self._mem_fr,'r')
+        # Affichage plots
+        plt.suptitle('Configuration :'+str(self.nl)+'*'+str(self.nc)+' // Taux d\'arbres : '+str(self.ta))
+        plt.xlabel('Temps passé')
+        plt.ylabel('Nombre arbres')
+
+class Creation:
+    """
+    SuperClass de Simulation, récupère les valeurs nécessaires puis crée la grille (self.Grid)
+
+    FONCTIONS :
+        - GetValues
+            - Récupère les valeurs nécessaires
+            - Utilisation de fenêtres tkinter
+        - GenGrid 
+            - Génére la grille/forêt de simulation
+            - Utilise les données récupérées par GetValues"""
+    
+    def __init__(self):
+        self.GetValues()
+        self.GenTime = self.GenGrid()
+        print("Temps de génération :",self.GenTime,"s")
+
+    def GetValues(self):
+        root = Tk()
+        root.title("Mode d'affichage")
+        label = Label(root, text='Ce programme permet de simuler un feu de forêt')
+        label2 = Label(root, text="Veuillez choisir le mode d'affichage")
+        label.pack(padx=10, pady=10)
+        label2.pack(padx=5,pady=5)
+        value = IntVar() 
+        bouton1 = Radiobutton(root, text="Affichage en console (petites simulations uniquement)", variable=value, value=1)
+        bouton2 = Radiobutton(root, text="Affichage tkinter", variable=value, value=0)
+        bouton3 = Radiobutton(root, text="Pas d'affichage (graphes instantanés)", variable=value, value=2)
+        bouton1.pack()
+        bouton2.pack()
+        bouton3.pack()
+        ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy)
+        ExitButton.pack(anchor=CENTER,pady=10,padx=10)
+        root.mainloop()
+        self.TypeAffichage = value.get()
+        if self.TypeAffichage==1 or self.TypeAffichage==0: # Console et Tkinter
+            maxTo = 40
+            Res = 1
+        elif self.TypeAffichage==2: # Rien
+            maxTo = 1000
+            Res = 50
+        else: return(-1)
+        root = Tk()
+        root.title("Configuration simulation : forme et taux")
+        varL = IntVar()
+        varC = IntVar()
+        varTa = DoubleVar()
+        varNfi = StringVar()
+        varProb = IntVar()
+        varProb.set(100)
+        varTa.set(1)
+        varNfi.set(1)
+        scale1 = Scale(root, variable=varL,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de lignes :",length=200,resolution=Res)
+        scale2 = Scale(root, variable=varC,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de colonnes :",length=200,resolution=Res)
+        scale3 = Scale(root, variable=varTa,orient=HORIZONTAL,from_=0,to=1,resolution=0.01,label="Taux d'arbres :",length=200)
+        scale4 = Scale(root, variable=varProb,orient=HORIZONTAL,from_=1,to=100,label="Probabilité mise à feu (%) :",length=200)
+        labelEntry = Label(root, text="Nombre d'arbres en feu :",anchor=CENTER,width=50)
+        entry = Entry(root, textvariable=varNfi)
+        scale1.pack()
+        scale2.pack()
+        scale3.pack()
+        scale4.pack()
+        labelEntry.pack()
+        entry.pack()
+        ExitButton = Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy)
+        ExitButton.pack(anchor=CENTER,pady=10,padx=10)
+        root.mainloop()
+        self.nc = varL.get()
+        self.nl = varC.get()
+        self.ta = varTa.get()
+        self.nfi = int(varNfi.get())
+        self.ProbFeu = varProb.get()
+        if self.TypeAffichage!=2:
+            root = Tk()
+            root.title("Configuration simulation : temps")
+            labelWarning = Label(root, text="La fenêtre ne peut pas être rafraichie plus vite que toutes les 0.5 secondes", anchor=CENTER)
+            labelWarning.pack()
+            varTp = StringVar()
+            varTp.set(1)
+            labelEntryTp = Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50)
+            entryTp = Entry(root, textvariable=varTp)
+            labelEntryTp.pack()
+            entryTp.pack()
+            ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy)
+            ExitButton.pack(anchor=CENTER,pady=10,padx=10)
+            root.mainloop()
+            self.tp = float(varTp.get())
+        
+    def GenGrid(self):
+        nC = self.nl*self.nc
+        self.narbres = int(self.ta*nC)
+        start = perf_counter()
+        g = [2 for i in range(int(self.nfi))]+\
+            [1 for j in range(int(self.narbres-self.nfi))]+\
+            [0 for ii in range(int(nC-self.narbres))]
+        shuffle(g) # Mélange aléatoire liste
+        self.grid = [g[i*self.nc:(i+1)*self.nc] for i in range(self.nl)]
+        end = perf_counter()
+        execution_time = round(end - start,5)
+
+        return execution_time
+        
+class Simulation(Creation):
+    """
+    Classe gérant la simulation 
+
+    Subclass de Creation, qui prépare la simulation : hérite des tous les attributs (self.Grid notamment)
+    """
+
+    @Statistiques # Mémoire pour statisitiques
+    def Passe(self):
+        """
+        Exécute une passe de propagation du feu
+
+        PARAMETRES :
+            - Aucun
+        
+        SORTIE :
+            - tuple : (int, int)
+                - [0] : nfr : nombre de feux restants (2)
+                - [1] : nar : nombre d'arbres restants (1)
+        """
+        for l in range(self.nl): # Boucle pour étude de tous les éléments de la grille (ligne)
+            for c in range(self.nc): # Boucle pour étude de tous les éléments de la grille (colonne)
+                if self.grid [l] [c]==2 or self.grid [l] [c]==3: # Détection états case + mise à feu cases adjacentes (si applicable)
+                    if l!=0:
+                        if self.grid [l-1] [c]==1 and Proba(self.ProbFeu): # Voisin haut
+                            self.grid [l-1] [c] = 5
+                    if l!=self.nl-1:
+                        if self.grid [l+1] [c]==1 and Proba(self.ProbFeu): # Voisin bas
+                            self.grid [l+1] [c] = 5
+                    if c!=self.nc-1:
+                        if self.grid [l] [c+1]==1 and Proba(self.ProbFeu): # Voisin droite
+                            self.grid [l] [c+1] = 5
+                    if c!=0:
+                        if self.grid [l] [c-1]==1 and Proba(self.ProbFeu): # Voisin gauche
+                            self.grid [l] [c-1] = 5 
+                    if self.grid [l] [c]==3:
+                        self.grid [l] [c] = 4 # Changement d'état de l'arbre de feu à brulé (état inerte)
+                    else:
+                        self.grid [l] [c] = 3
+        for il in self.grid: # Boucle pour remplacement nouveaux feux en feux normaux (Correction bug)
+            il[:] = [2 if x==5 else x for x in il]
+            il[:] = [3 if x==6 else x for x in il] 
+        # Enregristrement résultat de la passe
+        nar = sum([il.count(1) for il in self.grid])
+        nfr = sum([il.count(2)+il.count(3) for il in self.grid])
+        # Retour valeurs pour mémoire (Statistiques)
+        return (nfr, nar)
+
+    
+
+
+if __name__=='__main__': # Test
+    Sim = Simulation()
+
+    if Sim.TypeAffichage == 1: # Affichage console
+        # Affichage initial
+        MatPrint(Sim.grid)
+        print("Forêt initiale :")
+        print("Arbres restants :",Sim.narbres)
+        print("Arbres en feu :",Sim.nfi)
+
+        sleep(2) # pause
+
+        # première passe
+        Sim.Passe()
+        MatPrint(Sim.grid)
+        print("Arbres restants :",Sim.Passe._mem_ar[-1])
+        print("Arbres en feu :",Sim.Passe._mem_fr[-1])
+        print("Temps passé :",Sim.Passe.tp)
+        sleep(Sim.tp) # pause
+
+        while Sim.Passe._mem_fr[-1]>0: # Boucle des passes 
+            Sim.Passe()
+            SupprCnsl()
+            MatPrint(Sim.grid)
+            print("Arbres restants :",Sim.Passe._mem_ar[-1],"//",round((Sim.Passe._mem_ar[-1]+Sim.Passe._mem_fr[-1])/Sim.narbres*100,3),'%')
+            print("Arbres en feu :",Sim.Passe._mem_fr[-1])
+            print("Temps passé :",Sim.Passe.memory()[0])
+            sleep(Sim.tp) # pause
+
+        #print(Sim.Passe._mem_ar)
+        #print(Sim.Passe._mem_fr)
+
+    elif Sim.TypeAffichage == 2: # Sans affichage
+        Sim.Passe() # première passe
+        while Sim.Passe._mem_fr[-1]>0: # Boucle des passes 
+            Sim.Passe()
+
+    elif Sim.TypeAffichage == 0: # Affichage tkinter
+        def update(): # Rafraichisssement fenêtre
+            Sim.Passe()
+            SupprCnsl()
+            print("Arbres restants :",Sim.Passe._mem_ar[-1],"//",round((Sim.Passe._mem_ar[-1]+Sim.Passe._mem_fr[-1])/Sim.narbres*100,3),'%')
+            print("Arbres en feu :",Sim.Passe._mem_fr[-1])
+            print("Temps passé :",Sim.Passe.memory()[0])
+            for i in range(Sim.nl):
+                    for j in range(Sim.nc):
+                        cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
+            if Sim.Passe._mem_fr[-1]>0: # Boucle passes    
+                root.after(int(Sim.tp*1000),update)
+            else:
+                root.destroy()
+
+        couleurs = {0:"blue",1:"green",2:"orange",3:"red",4:"black"}
+        cells = [[0 for c in range(Sim.nc)] for l in range(Sim.nl)]
+        root = Tk()
+        root.title('Forêt')
+        root.resizable(False, False)
+        root.geometry("600x600")
+        for i in range(Sim.nl):
+            root.rowconfigure(i,weight=1)
+        for j in range(Sim.nc):
+            root.columnconfigure(j,weight=1)
+        for i in range(Sim.nl):
+            for j in range(Sim.nc):
+                w = Label(root,borderwidth=1,relief=SOLID,bg=couleurs[Sim.grid[i][j]])
+                cells[i][j] = w
+                cells[i][j].grid(row=i,column=j\
+                    ,ipadx=600/Sim.nc\
+                    ,ipady=600/Sim.nl)
+        root.after(int(Sim.tp*1000),update)
+        root.mainloop()
+
+    Sim.Passe.Affichage() # Création plot
+    plt.show() # Affichage plot
