@@ -38,15 +38,30 @@ def MatPrint(mat):
                 print(c,end=' ') 
         print(' ')
 
+class Statistiques(object):
+
+    def __init__(self, arg) -> None:
+        self._arg = arg
+        self.tp = 0
+        self._mem_ar = []
+        self._mem_fr = []
+
+    def __call__(self):
+        retval = self._arg()
+        self.tp += 1
+        self._mem_fr.append(retval[0])
+        self._mem_ar.append(retval[1])
+
+    def memory(self):
+        return (self.tp, self._mem_fr, self._mem_ar)
+
 class Creation:
 
-    def __init__(self, name="Creation") -> None:
-        self.SuperClass = name
+    def __init__(self) -> None:
         self.GetValues()
         #self.GenGrid()
-        print("Temps de génération :",self.GenGrid())
+        print("Temps de génération :",self.GenGrid(),"s")
 
-    
     def GetValues(self):
         root = Tk()
         root.title("Mode d'affichage")
@@ -128,24 +143,27 @@ class Creation:
         shuffle(g) # Mélange aléatoire liste
         self.grid = [g[i*self.nc:(i+1)*self.nc] for i in range(self.nl)]
         end = perf_counter()
-        execution_time = round(end - start,3)
+        execution_time = round(end - start,5)
 
         return execution_time
-
-    def __init_subclass__(cls, **kwargs) -> None:
-        print("Original class name :",cls.name)
-        cls.name = "Subclass"
         
-class Simulation(Creation, name="Simulation"):
-    name = "Simulation"
+class Simulation(Creation):
+
+    @Statistiques
+    def Passe() -> tuple:
+        nfr = 0
+        nar = 0
+        return (nfr, nar)
 
     
 
 
 if __name__=='__main__': # Test
     Sim = Simulation()
-    print("Class name :",Sim.name)
-    print("Original Class name :",Sim.SuperClass)
-    print("Nombre de colonnes :",Sim.nc)
 
     MatPrint(Sim.grid)
+
+    for i in range(5):    
+        Sim.Passe()
+
+    print(Sim.Passe._mem_ar)
