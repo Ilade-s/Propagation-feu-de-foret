@@ -102,7 +102,7 @@ class Statistiques(object): # Class decorator
         else: # Courbe temps long
             f2_ax2.plot(self._mem_fr,'r')
         # Affichage plots
-        plt.suptitle('Configuration :'+str(self.nl)+'*'+str(self.nc)+' // Taux d\'arbres : '+str(self.ta))
+        plt.suptitle('Configuration : '+str(self.nl)+'*'+str(self.nc)+' // Taux d\'arbres : '+str(self.ta))
         plt.xlabel('Temps passé')
         plt.ylabel('Nombre arbres')
 
@@ -169,6 +169,8 @@ class Creation:
         varProb.set(100)
         varTa.set(1)
         varNfi.set(1)
+        varTp = StringVar()
+        varTp.set("1")
 
         if PersMat!=None:
             State = "disabled"
@@ -176,6 +178,7 @@ class Creation:
             varC.set(len(PersMat[0]))
             Label(root, text="Matrice prédéterminée/personnalisée").pack()
             varTa.set(round(self.narbres/(len(PersMat)*len(PersMat[0])),2))
+            varNfi.set(self.nfi)
         else:
             State = "normal"
             Label(root, text="Matrice aléatoire").pack()
@@ -184,25 +187,19 @@ class Creation:
         Scale(root, variable=varC,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de colonnes :",length=200, resolution=Res, state=State).pack()
         Scale(root, variable=varTa,orient=HORIZONTAL,from_=0,to=1,resolution=0.01,label="Taux d'arbres :",length=200, state=State).pack()
         Scale(root, variable=varProb,orient=HORIZONTAL,from_=1,to=100,label="Probabilité mise à feu (%) :",length=200).pack()
-        Label(root, text="Nombre d'arbres en feu :",anchor=CENTER,width=50).pack()
+        Label(root, text="Nombre d'arbres en feu :", anchor=CENTER, width=50, state=State).pack()
         Entry(root, textvariable=varNfi, state=State).pack()
+        if self.TypeAffichage==0 or self.TypeAffichage==1:
+            Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50).pack()
+            Entry(root, textvariable=varTp).pack()
         Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
         self.nl = varL.get()
         self.nc = varC.get()
         self.ta = varTa.get()
         self.nfi = int(varNfi.get())
+        self.tp = int(varTp.get())
         self.ProbFeu = varProb.get()
-        if self.TypeAffichage!=2:
-            root = Tk()
-            root.title("Configuration simulation : temps")
-            varTp = StringVar()
-            varTp.set(1)
-            Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50).pack()
-            Entry(root, textvariable=varTp).pack()
-            Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
-            root.mainloop()
-            self.tp = float(varTp.get())
               
     def GenGrid(self):
         nC = self.nl*self.nc
@@ -299,7 +296,7 @@ if __name__=='__main__': # Test
     if Choix=="1":
         Sim = Simulation()
     elif Choix=="2":
-        mat = [[1,1,1],[1,2,1],[1,1,1]]
+        mat = [[1,1,1],[1,2,2],[1,1,1]]
         Sim = Simulation(mat)
     else:
         exit()
