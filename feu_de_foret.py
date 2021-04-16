@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt # Commandes plots
 import matplotlib.gridspec as gridspec # Commandes multiplot
 from termcolor import colored # Commandes pour couleur texte
 from tkinter import * # GUI
-import os 
+import os # Pour effacer la console (affichage)
 
 def SupprCnsl():
     """
@@ -108,7 +108,7 @@ class Statistiques(object): # Class decorator
 
 class Creation:
     """
-    SuperClass de Simulation, récupère les valeurs nécessaires puis crée la grille (self.Grid)
+    SuperClass de Simulation, récupère les valeurs nécessaires puis crée la grille (self.grid)
 
     FONCTIONS :
         - GetValues
@@ -219,7 +219,7 @@ class Simulation(Creation):
     """
     Classe gérant la simulation 
 
-    Subclass de Creation, qui prépare la simulation : hérite des tous les attributs (self.Grid notamment)
+    Subclass de Creation, qui prépare la simulation : hérite des tous les attributs (self.grid notamment)
     """
     def __init__(self, PersMat=None):
         """
