@@ -73,9 +73,6 @@ class Statistiques(object): # Class decorator
         self._mem_fr.append(retval[0])
         self._mem_ar.append(retval[1])
         return retval
-
-    def memory(self):
-        return (self.tp, self._mem_fr, self._mem_ar)
     
     def Affichage(self): # Plot Affichage final
         """
@@ -102,7 +99,7 @@ class Statistiques(object): # Class decorator
         else: # Courbe temps long
             f2_ax2.plot(self._mem_fr,'r')
         # Affichage plots
-        plt.suptitle('Configuration : '+str(self.nl)+'*'+str(self.nc)+' // Taux d\'arbres : '+str(self.ta))
+        plt.suptitle('Configuration : '+str(self.nl)+'*'+str(self.nc)+" // Taux d'arbres : "+str(self.ta))
         plt.xlabel('Temps passé')
         plt.ylabel('Nombre arbres')
 
@@ -129,7 +126,6 @@ class Creation:
             self.nfi = sum([il.count(2)+il.count(3) for il in self.grid])
             self.GetValues(PersMat)
             
-
     def GetValues(self, PersMat):
         root = Tk()
         root.title("Mode d'affichage")
@@ -231,6 +227,7 @@ class Simulation(Creation):
                 - Sinon, est une matrice de taille régulière, en 2D
                 - les valeurs doivent être des integers entre 0 et 3 inclus
                 - default = None
+                - doit avoir une taille inférieure ou égale à 1000, dans les deux dimensions
         """
         if PersMat!=None:
             for i in PersMat:
@@ -326,9 +323,6 @@ if __name__=='__main__': # Test
             print("Arbres en feu :",Sim.Passe._mem_fr[-1])
             print("Temps passé :",Sim.Passe.memory()[0])
             sleep(Sim.tp) # pause
-
-        #print(Sim.Passe._mem_ar)
-        #print(Sim.Passe._mem_fr)
 
     elif Sim.TypeAffichage == 2: # Sans affichage
         Sim.Passe() # première passe
