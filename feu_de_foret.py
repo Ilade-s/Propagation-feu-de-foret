@@ -132,7 +132,7 @@ class Creation:
         Radiobutton(root, text="Affichage en console (petites simulations uniquement)", variable=value, value=1).pack()
         Radiobutton(root, text="Affichage tkinter", variable=value, value=0).pack()
         Radiobutton(root, text="Pas d'affichage (graphes instantanés)", variable=value, value=2).pack()
-        ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
+        Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
         self.TypeAffichage = value.get()
         if self.TypeAffichage==1 or self.TypeAffichage==0: # Console et Tkinter
@@ -177,11 +177,10 @@ class Creation:
             varTp.set(1)
             Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50).pack()
             Entry(root, textvariable=varTp).pack()
-            ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
+            Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
             root.mainloop()
             self.tp = float(varTp.get())
-        
-        
+              
     def GenGrid(self):
         nC = self.nl*self.nc
         self.narbres = int(self.ta*nC)
