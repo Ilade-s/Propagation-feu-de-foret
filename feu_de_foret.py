@@ -118,27 +118,38 @@ class Creation:
             - Génére la grille/forêt de simulation
             - Utilise les données récupérées par GetValues"""
     
-    def __init__(self):
-        self.GetValues()
-        self.GenTime = self.GenGrid()
-        print("Temps de génération :",self.GenTime,"s")
+    def __init__(self, PersMat):
+        if PersMat==None:
+            self.GetValues(PersMat)
+            self.GenTime = self.GenGrid()
+            print("Temps de génération :",self.GenTime,"s")
+        else:
+            self.grid = PersMat
+            self.narbres = sum([il.count(1) for il in self.grid])
+            self.nfi = sum([il.count(2)+il.count(3) for il in self.grid])
+            self.GetValues(PersMat)
+            
 
-    def GetValues(self):
+    def GetValues(self, PersMat):
         root = Tk()
         root.title("Mode d'affichage")
-        label = Label(root, text='Ce programme permet de simuler un feu de forêt')
-        label2 = Label(root, text="Veuillez choisir le mode d'affichage")
-        label.pack(padx=10, pady=10)
-        label2.pack(padx=5,pady=5)
+        Label(root, text='Ce programme permet de simuler un feu de forêt').pack(padx=10, pady=10)
+        Label(root, text="Veuillez choisir le mode d'affichage").pack(padx=5,pady=5)
         value = IntVar() 
-        bouton1 = Radiobutton(root, text="Affichage en console (petites simulations uniquement)", variable=value, value=1)
-        bouton2 = Radiobutton(root, text="Affichage tkinter", variable=value, value=0)
-        bouton3 = Radiobutton(root, text="Pas d'affichage (graphes instantanés)", variable=value, value=2)
-        bouton1.pack()
-        bouton2.pack()
-        bouton3.pack()
-        ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy)
-        ExitButton.pack(anchor=CENTER,pady=10,padx=10)
+
+        Statecnsltk = "normal"
+        Stateinst = "normal"
+        value.set(0)
+        if PersMat!=None:
+            if len(PersMat)>40 or len(PersMat[0])>40:
+                Statecnsltk = "disabled"
+                Stateinst = "normal"
+                value.set(2)
+
+        Radiobutton(root, text="Affichage en console (petites simulations uniquement)", variable=value, value=1, state=Statecnsltk).pack()
+        Radiobutton(root, text="Affichage tkinter", variable=value, value=0, state=Statecnsltk).pack()
+        Radiobutton(root, text="Pas d'affichage (graphes instantanés)", variable=value, value=2, state=Stateinst).pack()
+        Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
         self.TypeAffichage = value.get()
         if self.TypeAffichage==1 or self.TypeAffichage==0: # Console et Tkinter
@@ -146,10 +157,10 @@ class Creation:
             Res = 1
         elif self.TypeAffichage==2: # Rien
             maxTo = 1000
-            Res = 50
+            Res = 1
         else: return(-1)
         root = Tk()
-        root.title("Configuration simulation : forme et taux")
+        root.title("Configuration simulation")
         varL = IntVar()
         varC = IntVar()
         varTa = DoubleVar()
@@ -158,42 +169,41 @@ class Creation:
         varProb.set(100)
         varTa.set(1)
         varNfi.set(1)
-        scale1 = Scale(root, variable=varL,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de lignes :",length=200,resolution=Res)
-        scale2 = Scale(root, variable=varC,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de colonnes :",length=200,resolution=Res)
-        scale3 = Scale(root, variable=varTa,orient=HORIZONTAL,from_=0,to=1,resolution=0.01,label="Taux d'arbres :",length=200)
-        scale4 = Scale(root, variable=varProb,orient=HORIZONTAL,from_=1,to=100,label="Probabilité mise à feu (%) :",length=200)
-        labelEntry = Label(root, text="Nombre d'arbres en feu :",anchor=CENTER,width=50)
-        entry = Entry(root, textvariable=varNfi)
-        scale1.pack()
-        scale2.pack()
-        scale3.pack()
-        scale4.pack()
-        labelEntry.pack()
-        entry.pack()
-        ExitButton = Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy)
-        ExitButton.pack(anchor=CENTER,pady=10,padx=10)
+
+        if PersMat!=None:
+            State = "disabled"
+            varL.set(len(PersMat))
+            varC.set(len(PersMat[0]))
+            Label(root, text="Matrice prédéterminée/personnalisée").pack()
+            varTa.set(round(self.narbres/(len(PersMat)*len(PersMat[0])),2))
+        else:
+            State = "normal"
+            Label(root, text="Matrice aléatoire").pack()
+
+        Scale(root, variable=varL,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de lignes :",length=200, resolution=Res, state=State).pack()
+        Scale(root, variable=varC,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de colonnes :",length=200, resolution=Res, state=State).pack()
+        Scale(root, variable=varTa,orient=HORIZONTAL,from_=0,to=1,resolution=0.01,label="Taux d'arbres :",length=200, state=State).pack()
+        Scale(root, variable=varProb,orient=HORIZONTAL,from_=1,to=100,label="Probabilité mise à feu (%) :",length=200).pack()
+        Label(root, text="Nombre d'arbres en feu :",anchor=CENTER,width=50).pack()
+        Entry(root, textvariable=varNfi, state=State).pack()
+        Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
-        self.nc = varL.get()
-        self.nl = varC.get()
+        self.nl = varL.get()
+        self.nc = varC.get()
         self.ta = varTa.get()
         self.nfi = int(varNfi.get())
         self.ProbFeu = varProb.get()
         if self.TypeAffichage!=2:
             root = Tk()
             root.title("Configuration simulation : temps")
-            labelWarning = Label(root, text="La fenêtre ne peut pas être rafraichie plus vite que toutes les 0.5 secondes", anchor=CENTER)
-            labelWarning.pack()
             varTp = StringVar()
             varTp.set(1)
-            labelEntryTp = Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50)
-            entryTp = Entry(root, textvariable=varTp)
-            labelEntryTp.pack()
-            entryTp.pack()
-            ExitButton = Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy)
-            ExitButton.pack(anchor=CENTER,pady=10,padx=10)
+            Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50).pack()
+            Entry(root, textvariable=varTp).pack()
+            Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
             root.mainloop()
             self.tp = float(varTp.get())
-        
+              
     def GenGrid(self):
         nC = self.nl*self.nc
         self.narbres = int(self.ta*nC)
@@ -214,6 +224,23 @@ class Simulation(Creation):
 
     Subclass de Creation, qui prépare la simulation : hérite des tous les attributs (self.Grid notamment)
     """
+    def __init__(self, PersMat=None):
+        """
+        Initialise la simulation
+         
+        PARAMETRE :
+            - PersMat : None || list[list[int]]
+                - optionnel, si None, sera ignoré (génération aléatoire)
+                - Sinon, est une matrice de taille régulière, en 2D
+                - les valeurs doivent être des integers entre 0 et 3 inclus
+                - default = None
+        """
+        if PersMat!=None:
+            for i in PersMat:
+                for j in i:
+                    assert j==0 or j==1 or j==2 or j==3, "matrice invalide"
+            assert len(PersMat)<=1000 and len(PersMat[0])<=1000, "matrice trop importante (+1000 lignes ou colonnes)"
+        super().__init__(PersMat)
 
     @Statistiques # Mémoire pour statisitiques
     def Passe(self):
@@ -228,8 +255,8 @@ class Simulation(Creation):
                 - [0] : nfr : nombre de feux restants (2)
                 - [1] : nar : nombre d'arbres restants (1)
         """
-        for l in range(self.nl): # Boucle pour étude de tous les éléments de la grille (ligne)
-            for c in range(self.nc): # Boucle pour étude de tous les éléments de la grille (colonne)
+        for l in range(len(self.grid)): # Boucle pour étude de tous les éléments de la grille (ligne)
+            for c in range(len(self.grid[0])): # Boucle pour étude de tous les éléments de la grille (colonne)
                 if self.grid [l] [c]==2 or self.grid [l] [c]==3: # Détection états case + mise à feu cases adjacentes (si applicable)
                     if l!=0:
                         if self.grid [l-1] [c]==1 and Proba(self.ProbFeu): # Voisin haut
@@ -260,7 +287,22 @@ class Simulation(Creation):
 
 
 if __name__=='__main__': # Test
-    Sim = Simulation()
+    print("=========================================")
+    print("Bienvenue dans ma simulation de feu de forêt !")
+    print("Vous pouvez exécuter une simulation aléatoire ou prédéterminée :")
+    print("\t- 1 : Simulation à matrice aléatoire")
+    print("\t- 2 : Simulation à matrice prédéterminée")
+    print("=========================================")
+
+    Choix = input("Choix : ")
+    
+    if Choix=="1":
+        Sim = Simulation()
+    elif Choix=="2":
+        mat = [[1,1,1],[1,2,1],[1,1,1]]
+        Sim = Simulation(mat)
+    else:
+        exit()
 
     if Sim.TypeAffichage == 1: # Affichage console
         # Affichage initial
