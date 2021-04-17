@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt # Commandes plots
 import matplotlib.gridspec as gridspec # Commandes multiplot
 from termcolor import colored # Commandes pour couleur texte
 from tkinter import * # GUI
-import os 
+import os # Pour effacer la console (affichage)
+import tkinter.messagebox as msgbox # FoC (message d'info)
+from functools import partial # tkinter appel de fonctions avec paramètres
 
 def SupprCnsl():
     """
@@ -73,9 +75,6 @@ class Statistiques(object): # Class decorator
         self._mem_fr.append(retval[0])
         self._mem_ar.append(retval[1])
         return retval
-
-    def memory(self):
-        return (self.tp, self._mem_fr, self._mem_ar)
     
     def Affichage(self): # Plot Affichage final
         """
@@ -102,13 +101,14 @@ class Statistiques(object): # Class decorator
         else: # Courbe temps long
             f2_ax2.plot(self._mem_fr,'r')
         # Affichage plots
-        plt.suptitle('Configuration : '+str(self.nl)+'*'+str(self.nc)+' // Taux d\'arbres : '+str(self.ta))
+        plt.suptitle('Configuration : '+str(self.nl)+'*'+str(self.nc)+" // Taux d'arbres : "+str(self.ta))
+        plt.title("Arbres en feu initiaux : "+str(Sim.nfi))
         plt.xlabel('Temps passé')
         plt.ylabel('Nombre arbres')
 
 class Creation:
     """
-    SuperClass de Simulation, récupère les valeurs nécessaires puis crée la grille (self.Grid)
+    SuperClass de Simulation, récupère les valeurs nécessaires puis crée la grille (self.grid)
 
     FONCTIONS :
         - GetValues
@@ -129,7 +129,6 @@ class Creation:
             self.nfi = sum([il.count(2)+il.count(3) for il in self.grid])
             self.GetValues(PersMat)
             
-
     def GetValues(self, PersMat):
         root = Tk()
         root.title("Mode d'affichage")
@@ -141,10 +140,14 @@ class Creation:
         Stateinst = "normal"
         value.set(0)
         if PersMat!=None:
+            Label(root, text="Matrice prédéterminée/personnalisée").pack()
             if len(PersMat)>40 or len(PersMat[0])>40:
                 Statecnsltk = "disabled"
                 Stateinst = "normal"
                 value.set(2)
+        else:
+            Label(root, text="Matrice aléatoire").pack()
+
 
         Radiobutton(root, text="Affichage en console (petites simulations uniquement)", variable=value, value=1, state=Statecnsltk).pack()
         Radiobutton(root, text="Affichage tkinter", variable=value, value=0, state=Statecnsltk).pack()
@@ -166,14 +169,17 @@ class Creation:
         varTa = DoubleVar()
         varNfi = StringVar()
         varProb = IntVar()
+        varFoC = BooleanVar()
         varProb.set(100)
         varTa.set(1)
         varNfi.set(1)
         varTp = StringVar()
         varTp.set("1")
+        varFoC.set(False)
 
         if PersMat!=None:
             State = "disabled"
+            StateArbre = "disabled"
             varL.set(len(PersMat))
             varC.set(len(PersMat[0]))
             Label(root, text="Matrice prédéterminée/personnalisée").pack()
@@ -187,13 +193,29 @@ class Creation:
         Scale(root, variable=varC,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de colonnes :",length=200, resolution=Res, state=State).pack()
         Scale(root, variable=varTa,orient=HORIZONTAL,from_=0,to=1,resolution=0.01,label="Taux d'arbres :",length=200, state=State).pack()
         Scale(root, variable=varProb,orient=HORIZONTAL,from_=1,to=100,label="Probabilité mise à feu (%) :",length=200).pack()
-        Label(root, text="Nombre d'arbres en feu :", anchor=CENTER, width=50, state=State).pack()
-        Entry(root, textvariable=varNfi, state=State).pack()
+        TxtArbre = Label(root, text="Nombre d'arbres en feu :", anchor=CENTER, width=50, state=State)
+        TxtArbre.pack()
+        EntryArbre = Entry(root, textvariable=varNfi, state=State)
+        EntryArbre.pack()
         if self.TypeAffichage==0 or self.TypeAffichage==1:
             Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50).pack()
             Entry(root, textvariable=varTp).pack()
+            if self.TypeAffichage==0 and PersMat==None: # tkinter (Fire on click)
+                def isChecked(): # Action quand bouton coché ou décoché
+                    if varFoC.get(): # Feu par clic
+                        varNfi.set("0")
+                        TxtArbre.configure(state="disabled")
+                        EntryArbre.configure(state="disabled")
+                    else:
+                        varNfi.set("1")
+                        TxtArbre.configure(state="normal")
+                        EntryArbre.configure(state="normal")
+                Label(root, text="Si coché, désactive le choix du nombre d'arbres en feu").pack()
+                Checkbutton(root, text="Choix des cases en feu par clic", variable=varFoC, onvalue=True, offvalue=False, command=isChecked).pack()
+                
         Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
+        self.FoC = varFoC.get()
         self.nl = varL.get()
         self.nc = varC.get()
         self.ta = varTa.get()
@@ -219,7 +241,7 @@ class Simulation(Creation):
     """
     Classe gérant la simulation 
 
-    Subclass de Creation, qui prépare la simulation : hérite des tous les attributs (self.Grid notamment)
+    Subclass de Creation, qui prépare la simulation : hérite des tous les attributs (self.grid notamment)
     """
     def __init__(self, PersMat=None):
         """
@@ -231,6 +253,7 @@ class Simulation(Creation):
                 - Sinon, est une matrice de taille régulière, en 2D
                 - les valeurs doivent être des integers entre 0 et 3 inclus
                 - default = None
+                - doit avoir une taille inférieure ou égale à 1000, dans les deux dimensions
         """
         if PersMat!=None:
             for i in PersMat:
@@ -324,11 +347,8 @@ if __name__=='__main__': # Test
             MatPrint(Sim.grid)
             print("Arbres restants :",Sim.Passe._mem_ar[-1],"//",round((Sim.Passe._mem_ar[-1]+Sim.Passe._mem_fr[-1])/Sim.narbres*100,3),'%')
             print("Arbres en feu :",Sim.Passe._mem_fr[-1])
-            print("Temps passé :",Sim.Passe.memory()[0])
+            print("Temps passé :",Sim.Passe.tp)
             sleep(Sim.tp) # pause
-
-        #print(Sim.Passe._mem_ar)
-        #print(Sim.Passe._mem_fr)
 
     elif Sim.TypeAffichage == 2: # Sans affichage
         Sim.Passe() # première passe
@@ -341,16 +361,49 @@ if __name__=='__main__': # Test
             SupprCnsl()
             print("Arbres restants :",Sim.Passe._mem_ar[-1],"//",round((Sim.Passe._mem_ar[-1]+Sim.Passe._mem_fr[-1])/Sim.narbres*100,3),'%')
             print("Arbres en feu :",Sim.Passe._mem_fr[-1])
-            print("Temps passé :",Sim.Passe.memory()[0])
+            print("Temps passé :",Sim.Passe.tp)
             for i in range(Sim.nl):
-                    for j in range(Sim.nc):
-                        cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
+                for j in range(Sim.nc):
+                    cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
             if Sim.Passe._mem_fr[-1]>0: # Boucle passes    
                 root.after(int(Sim.tp*1000),update)
             else:
                 root.destroy()
 
         couleurs = {0:"blue",1:"green",2:"orange",3:"red",4:"black"}
+
+        if Sim.FoC: # Premier affichage de choix des cases en feu (si demandé)
+            def OnClick(i,j):
+                Sim.grid[i][j] = 2
+                # Rafraichissement
+                for i in range(Sim.nl):
+                    for j in range(Sim.nc):
+                        cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
+                if msgbox.askyesno("Confirmation","Avez-vous terminé votre sélection ?"): 
+                    root.destroy()
+
+            cells = [[0 for c in range(Sim.nc)] for l in range(Sim.nl)]
+            root = Tk()
+            msgbox.showinfo("Fire on click : information", 
+            "Pour choisir les cases à mettre en feu, vous devrez cliquer sur chaque case souhaitée, et confirmer quand vous aurez fini (pas avant !)")
+            root.title('Choix cases en feu (FoC)')
+            root.resizable(False, False)
+            root.geometry("600x600")
+            for i in range(Sim.nl):
+                root.rowconfigure(i,weight=1)
+            for j in range(Sim.nc):
+                root.columnconfigure(j,weight=1)
+            for i in range(Sim.nl):
+                for j in range(Sim.nc):
+                    w = Button(root,borderwidth=1,relief=SOLID,bg=couleurs[Sim.grid[i][j]], command=partial(OnClick, i, j))
+                    cells[i][j] = w
+                    cells[i][j].grid(row=i,column=j\
+                        ,ipadx=600/Sim.nc\
+                        ,ipady=600/Sim.nl)
+            root.mainloop()
+            Sim.nfi = sum([il.count(2) for il in Sim.grid])
+
+        # Affichage normal
         cells = [[0 for c in range(Sim.nc)] for l in range(Sim.nl)]
         root = Tk()
         root.title('Forêt')
