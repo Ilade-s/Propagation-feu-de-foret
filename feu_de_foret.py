@@ -5,6 +5,8 @@ import matplotlib.gridspec as gridspec # Commandes multiplot
 from termcolor import colored # Commandes pour couleur texte
 from tkinter import * # GUI
 import os # Pour effacer la console (affichage)
+import tkinter.messagebox as msgbox # FoC (message d'info)
+from functools import partial # tkinter appel de fonctions avec paramètres
 
 def SupprCnsl():
     """
@@ -100,6 +102,7 @@ class Statistiques(object): # Class decorator
             f2_ax2.plot(self._mem_fr,'r')
         # Affichage plots
         plt.suptitle('Configuration : '+str(self.nl)+'*'+str(self.nc)+" // Taux d'arbres : "+str(self.ta))
+        plt.title("Arbres en feu initiaux : "+str(Sim.nfi))
         plt.xlabel('Temps passé')
         plt.ylabel('Nombre arbres')
 
@@ -197,7 +200,7 @@ class Creation:
         if self.TypeAffichage==0 or self.TypeAffichage==1:
             Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50).pack()
             Entry(root, textvariable=varTp).pack()
-            if self.TypeAffichage==0: # tkinter (Fire on click)
+            if self.TypeAffichage==0 and PersMat==None: # tkinter (Fire on click)
                 def isChecked(): # Action quand bouton coché ou décoché
                     if varFoC.get(): # Feu par clic
                         varNfi.set("0")
@@ -368,6 +371,39 @@ if __name__=='__main__': # Test
                 root.destroy()
 
         couleurs = {0:"blue",1:"green",2:"orange",3:"red",4:"black"}
+
+        if Sim.FoC: # Premier affichage de choix des cases en feu (si demandé)
+            def OnClick(i,j):
+                Sim.grid[i][j] = 2
+                # Rafraichissement
+                for i in range(Sim.nl):
+                    for j in range(Sim.nc):
+                        cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
+                if msgbox.askyesno("Confirmation","Avez-vous terminé votre sélection ?"): 
+                    root.destroy()
+
+            cells = [[0 for c in range(Sim.nc)] for l in range(Sim.nl)]
+            root = Tk()
+            msgbox.showinfo("Fire on click : information", 
+            "Pour choisir les cases à mettre en feu, vous devrez cliquer sur chaque case souhaitée, et confirmer quand vous aurez fini (pas avant !)")
+            root.title('Choix cases en feu (FoC)')
+            root.resizable(False, False)
+            root.geometry("600x600")
+            for i in range(Sim.nl):
+                root.rowconfigure(i,weight=1)
+            for j in range(Sim.nc):
+                root.columnconfigure(j,weight=1)
+            for i in range(Sim.nl):
+                for j in range(Sim.nc):
+                    w = Button(root,borderwidth=1,relief=SOLID,bg=couleurs[Sim.grid[i][j]], command=partial(OnClick, i, j))
+                    cells[i][j] = w
+                    cells[i][j].grid(row=i,column=j\
+                        ,ipadx=600/Sim.nc\
+                        ,ipady=600/Sim.nl)
+            root.mainloop()
+            Sim.nfi = sum([il.count(2) for il in Sim.grid])
+
+        # Affichage normal
         cells = [[0 for c in range(Sim.nc)] for l in range(Sim.nl)]
         root = Tk()
         root.title('Forêt')
