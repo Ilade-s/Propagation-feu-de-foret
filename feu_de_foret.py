@@ -220,7 +220,7 @@ class Creation:
         self.nc = varC.get()
         self.ta = varTa.get()
         self.nfi = int(varNfi.get())
-        self.tp = int(varTp.get())
+        self.tp = float(varTp.get())
         self.ProbFeu = varProb.get()
               
     def GenGrid(self):
