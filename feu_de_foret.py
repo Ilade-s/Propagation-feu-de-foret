@@ -137,10 +137,14 @@ class Creation:
         Stateinst = "normal"
         value.set(0)
         if PersMat!=None:
+            Label(root, text="Matrice prédéterminée/personnalisée").pack()
             if len(PersMat)>40 or len(PersMat[0])>40:
                 Statecnsltk = "disabled"
                 Stateinst = "normal"
                 value.set(2)
+        else:
+            Label(root, text="Matrice aléatoire").pack()
+
 
         Radiobutton(root, text="Affichage en console (petites simulations uniquement)", variable=value, value=1, state=Statecnsltk).pack()
         Radiobutton(root, text="Affichage tkinter", variable=value, value=0, state=Statecnsltk).pack()
@@ -162,14 +166,17 @@ class Creation:
         varTa = DoubleVar()
         varNfi = StringVar()
         varProb = IntVar()
+        varFoC = BooleanVar()
         varProb.set(100)
         varTa.set(1)
         varNfi.set(1)
         varTp = StringVar()
         varTp.set("1")
+        varFoC.set(False)
 
         if PersMat!=None:
             State = "disabled"
+            StateArbre = "disabled"
             varL.set(len(PersMat))
             varC.set(len(PersMat[0]))
             Label(root, text="Matrice prédéterminée/personnalisée").pack()
@@ -183,13 +190,29 @@ class Creation:
         Scale(root, variable=varC,orient=HORIZONTAL,from_=1,to=maxTo,label="Nombre de colonnes :",length=200, resolution=Res, state=State).pack()
         Scale(root, variable=varTa,orient=HORIZONTAL,from_=0,to=1,resolution=0.01,label="Taux d'arbres :",length=200, state=State).pack()
         Scale(root, variable=varProb,orient=HORIZONTAL,from_=1,to=100,label="Probabilité mise à feu (%) :",length=200).pack()
-        Label(root, text="Nombre d'arbres en feu :", anchor=CENTER, width=50, state=State).pack()
-        Entry(root, textvariable=varNfi, state=State).pack()
+        TxtArbre = Label(root, text="Nombre d'arbres en feu :", anchor=CENTER, width=50, state=State)
+        TxtArbre.pack()
+        EntryArbre = Entry(root, textvariable=varNfi, state=State)
+        EntryArbre.pack()
         if self.TypeAffichage==0 or self.TypeAffichage==1:
             Label(root, text="Temps entre chaque étape (affichage)",anchor=CENTER,width=50).pack()
             Entry(root, textvariable=varTp).pack()
+            if self.TypeAffichage==0: # tkinter (Fire on click)
+                def isChecked(): # Action quand bouton coché ou décoché
+                    if varFoC.get(): # Feu par clic
+                        varNfi.set("0")
+                        TxtArbre.configure(state="disabled")
+                        EntryArbre.configure(state="disabled")
+                    else:
+                        varNfi.set("1")
+                        TxtArbre.configure(state="normal")
+                        EntryArbre.configure(state="normal")
+                Label(root, text="Si coché, désactive le choix du nombre d'arbres en feu").pack()
+                Checkbutton(root, text="Choix des cases en feu par clic", variable=varFoC, onvalue=True, offvalue=False, command=isChecked).pack()
+                
         Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
+        self.FoC = varFoC.get()
         self.nl = varL.get()
         self.nc = varC.get()
         self.ta = varTa.get()
@@ -321,7 +344,7 @@ if __name__=='__main__': # Test
             MatPrint(Sim.grid)
             print("Arbres restants :",Sim.Passe._mem_ar[-1],"//",round((Sim.Passe._mem_ar[-1]+Sim.Passe._mem_fr[-1])/Sim.narbres*100,3),'%')
             print("Arbres en feu :",Sim.Passe._mem_fr[-1])
-            print("Temps passé :",Sim.Passe.memory()[0])
+            print("Temps passé :",Sim.Passe.tp)
             sleep(Sim.tp) # pause
 
     elif Sim.TypeAffichage == 2: # Sans affichage
@@ -335,10 +358,10 @@ if __name__=='__main__': # Test
             SupprCnsl()
             print("Arbres restants :",Sim.Passe._mem_ar[-1],"//",round((Sim.Passe._mem_ar[-1]+Sim.Passe._mem_fr[-1])/Sim.narbres*100,3),'%')
             print("Arbres en feu :",Sim.Passe._mem_fr[-1])
-            print("Temps passé :",Sim.Passe.memory()[0])
+            print("Temps passé :",Sim.Passe.tp)
             for i in range(Sim.nl):
-                    for j in range(Sim.nc):
-                        cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
+                for j in range(Sim.nc):
+                    cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
             if Sim.Passe._mem_fr[-1]>0: # Boucle passes    
                 root.after(int(Sim.tp*1000),update)
             else:
