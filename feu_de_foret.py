@@ -382,8 +382,6 @@ if __name__=='__main__': # Test
 
             cells = [[0 for c in range(Sim.nc)] for l in range(Sim.nl)]
             root = Tk()
-            msgbox.showinfo("Fire on click : information", 
-            "Pour choisir les cases à mettre en feu, vous devrez cliquer sur chaque case souhaitée, et confirmer quand vous aurez fini (pas avant !)")
             root.title('Choix cases en feu (FoC)')
             root.resizable(False, False)
             root.geometry("600x600")
@@ -398,6 +396,8 @@ if __name__=='__main__': # Test
                     cells[i][j].grid(row=i,column=j\
                         ,ipadx=600/Sim.nc\
                         ,ipady=600/Sim.nl)
+            msgbox.showinfo("Fire on click : information", 
+            "Pour choisir les cases à mettre en feu, vous devrez cliquer sur chaque case souhaitée, et confirmer quand vous aurez fini (pas avant !)")
             root.mainloop()
             Sim.nfi = sum([il.count(2) for il in Sim.grid])
 
