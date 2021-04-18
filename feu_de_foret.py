@@ -376,9 +376,7 @@ if __name__=='__main__': # Test
             def OnClick(i,j):
                 Sim.grid[i][j] = 2
                 # Rafraichissement
-                for i in range(Sim.nl):
-                    for j in range(Sim.nc):
-                        cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
+                cells[i][j].configure(bg=couleurs[Sim.grid[i][j]])
                 if msgbox.askyesno("Confirmation","Avez-vous terminé votre sélection ?"): 
                     root.destroy()
 
