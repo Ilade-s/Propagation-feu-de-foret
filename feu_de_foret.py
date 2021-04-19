@@ -7,6 +7,8 @@ from tkinter import * # GUI
 import os # Pour effacer la console (affichage)
 import tkinter.messagebox as msgbox # FoC (message d'info)
 from functools import partial # tkinter appel de fonctions avec paramètres
+import tkinter.ttk as ttk
+from tkinter.ttk import Radiobutton,Checkbutton,Entry # meilleur style
 
 def SupprCnsl():
     """
@@ -149,10 +151,10 @@ class Creation:
             Label(root, text="Matrice aléatoire").pack()
 
 
-        Radiobutton(root, text="Affichage en console (petites simulations uniquement)", variable=value, value=1, state=Statecnsltk).pack()
+        Radiobutton(root, text="Affichage en console (petites simulations uniquement)", variable=value, value=1, state=Statecnsltk).pack(padx=10)
         Radiobutton(root, text="Affichage tkinter", variable=value, value=0, state=Statecnsltk).pack()
         Radiobutton(root, text="Pas d'affichage (graphes instantanés)", variable=value, value=2, state=Stateinst).pack()
-        Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
+        ttk.Button(root, text="Confirmer (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
         self.TypeAffichage = value.get()
         if self.TypeAffichage==1 or self.TypeAffichage==0: # Console et Tkinter
@@ -179,7 +181,6 @@ class Creation:
 
         if PersMat!=None:
             State = "disabled"
-            StateArbre = "disabled"
             varL.set(len(PersMat))
             varC.set(len(PersMat[0]))
             Label(root, text="Matrice prédéterminée/personnalisée").pack()
@@ -213,7 +214,7 @@ class Creation:
                 Label(root, text="Si coché, désactive le choix du nombre d'arbres en feu").pack()
                 Checkbutton(root, text="Choix des cases en feu par clic", variable=varFoC, onvalue=True, offvalue=False, command=isChecked).pack()
                 
-        Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
+        ttk.Button(root, text="Confirmer les valeurs (ferme la fenêtre)", command=root.destroy).pack(anchor=CENTER,pady=10,padx=10)
         root.mainloop()
         self.FoC = varFoC.get()
         self.nl = varL.get()
@@ -391,7 +392,7 @@ if __name__=='__main__': # Test
                 root.columnconfigure(j,weight=1)
             for i in range(Sim.nl):
                 for j in range(Sim.nc):
-                    w = Button(root,borderwidth=1,relief=SOLID,bg=couleurs[Sim.grid[i][j]], command=partial(OnClick, i, j))
+                    w = Button(root,bg=couleurs[Sim.grid[i][j]], command=partial(OnClick, i, j))
                     cells[i][j] = w
                     cells[i][j].grid(row=i,column=j\
                         ,ipadx=600/Sim.nc\
