@@ -392,6 +392,8 @@ class SimWindow(Tk):
                         row=i, column=j, ipadx=600/Sim.nc, ipady=600/Sim.nl)
             msgbox.showinfo("Fire on click : information",
                             "Pour choisir les cases à mettre en feu, vous devrez cliquer sur chaque case souhaitée, et confirmer quand vous aurez fini (pas avant !)")
+        else: # FoC non demandé par l'utilisateur
+            self.Affichage(Sim)  # Affichage simulation normale
 
     def Affichage(self, Sim):
         # efface tous les widgets de la fenêtre
