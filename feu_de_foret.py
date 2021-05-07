@@ -455,8 +455,8 @@ if __name__ == '__main__':  # Test
         # Affichage initial
         MatPrint(Sim.grid)
         print("Forêt initiale :")
-        print("Arbres restants :", Sim.narbres)
-        print("Arbres en feu :", Sim.nfi)
+        print(f"Arbres restants : {Sim.narbres}")
+        print(f"Arbres en feu : {Sim.nfi}")
 
         sleep(2)  # pause
 
