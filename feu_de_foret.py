@@ -356,7 +356,7 @@ class SimWindow(Tk):
     Affichage tkinter de la simulation
     """
 
-    def __init__(self, master=None) -> None:
+    def __init__(self, master=None):
         super().__init__(master)
         self.couleurs = {0: "blue", 1: "green",
                          2: "orange", 3: "red", 4: "black"}
